@@ -8,8 +8,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
+import jakarta.validation.Valid;
+import com.lostfound.dto.ReportDto;
 
 @RestController
 public class ReportController {
@@ -23,10 +23,8 @@ public class ReportController {
     @PostMapping("/api/items/{id}/report")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Report> createReport(@PathVariable("id") Long itemId,
-                                               @RequestBody Map<String, String> body) {
-        String contact = body.getOrDefault("reporterContact", "");
-        String reason = body.getOrDefault("reason", "");
-        Report created = reportService.create(itemId, contact, reason);
+                                               @Valid @RequestBody ReportDto reportDto) {
+        Report created = reportService.create(itemId, reportDto.getReporterContact(), reportDto.getReason());
         return ResponseEntity.ok(created);
     }
 

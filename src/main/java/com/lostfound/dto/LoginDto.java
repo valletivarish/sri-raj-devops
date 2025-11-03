@@ -1,7 +1,15 @@
 package com.lostfound.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class LoginDto {
+	@NotBlank(message = "Username or email is required")
+	@Size(min = 3, max = 100, message = "Username or email must be between 3 and 100 characters")
 	private String usernameOrEmail;
+	
+	@NotBlank(message = "Password is required")
+	@Size(min = 6, max = 100, message = "Password must be between 6 and 100 characters")
 	private String password;
 
 	public LoginDto() {
@@ -19,7 +27,7 @@ public class LoginDto {
 	}
 
 	public void setUsernameOrEmail(String usernameOrEmail) {
-		this.usernameOrEmail = usernameOrEmail;
+		this.usernameOrEmail = usernameOrEmail != null ? usernameOrEmail.trim() : null;
 	}
 
 	public String getPassword() {

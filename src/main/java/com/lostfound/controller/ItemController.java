@@ -8,8 +8,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
+import jakarta.validation.Valid;
+import com.lostfound.dto.ItemDto;
+import com.lostfound.dto.ItemStatusDto;
 
 @RestController
 @RequestMapping("/api/items")
@@ -40,14 +41,26 @@ public class ItemController {
 
     @PostMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Item> create(@RequestBody Item item) {
+    public ResponseEntity<Item> create(@Valid @RequestBody ItemDto itemDto) {
+        Item item = new Item();
+        item.setTitle(itemDto.getTitle());
+        item.setDescription(itemDto.getDescription());
+        item.setType(itemDto.getType());
+        item.setTags(itemDto.getTags());
+        item.setLocation(itemDto.getLocation());
         Item created = itemService.create(item);
         return ResponseEntity.ok(created);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Item> update(@PathVariable Long id, @RequestBody Item item) {
+    public ResponseEntity<Item> update(@PathVariable Long id, @Valid @RequestBody ItemDto itemDto) {
+        Item item = new Item();
+        item.setTitle(itemDto.getTitle());
+        item.setDescription(itemDto.getDescription());
+        item.setType(itemDto.getType());
+        item.setTags(itemDto.getTags());
+        item.setLocation(itemDto.getLocation());
         Item updated = itemService.update(id, item);
         return ResponseEntity.ok(updated);
     }
@@ -73,12 +86,8 @@ public class ItemController {
     @PatchMapping("/{id}/status")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Item> updateStatus(@PathVariable Long id, 
-                                             @RequestBody Map<String, String> body) {
-        String status = body.get("status");
-        if (status == null || status.isBlank()) {
-            return ResponseEntity.badRequest().build();
-        }
-        Item updated = itemService.updateStatus(id, status);
+                                             @Valid @RequestBody ItemStatusDto statusDto) {
+        Item updated = itemService.updateStatus(id, statusDto.getStatus().name());
         return ResponseEntity.ok(updated);
     }
 }
