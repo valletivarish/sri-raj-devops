@@ -24,7 +24,7 @@ phases:
   pre_build:
     commands:
       - semgrep --config=auto --json > semgrep-report.json || true
-      - dependency-check.sh --project LostFound --scan . --format JSON --out dependency-check-report --nvdApiKey "$NVD_API_KEY" --nvdApiDelay 8000
+      - dependency-check.sh --project LostFound --scan . --format JSON --out dependency-check-report --nvdApiKey "$NVD_API_KEY" --nvdApiDelay 12000 --nvdApiUrl https://services.nvd.nist.gov/rest/json/cves/2.0
       - >
         CRITICALS=$(jq '.dependencies[].vulnerabilities[]? | select(.severity=="CRITICAL")' dependency-check-report/dependency-check-report.json | wc -l);
         if [ "$CRITICALS" -gt 0 ]; then exit 1; fi
