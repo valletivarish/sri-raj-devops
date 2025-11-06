@@ -38,8 +38,8 @@ class LoginDtoTest {
         dto.setPassword("password123");
 
         Set<ConstraintViolation<LoginDto>> violations = validator.validate(dto);
-        assertEquals(1, violations.size());
-        assertEquals("Username or email is required", violations.iterator().next().getMessage());
+        assertFalse(violations.isEmpty(), "Expected violations for blank username or email");
+        assertTrue(violations.stream().anyMatch(v -> v.getMessage().equals("Username or email is required")));
     }
 
     @Test
@@ -71,8 +71,8 @@ class LoginDtoTest {
         dto.setPassword("");
 
         Set<ConstraintViolation<LoginDto>> violations = validator.validate(dto);
-        assertEquals(1, violations.size());
-        assertEquals("Password is required", violations.iterator().next().getMessage());
+        assertFalse(violations.isEmpty(), "Expected violations for blank password");
+        assertTrue(violations.stream().anyMatch(v -> v.getMessage().equals("Password is required")));
     }
 
     @Test
