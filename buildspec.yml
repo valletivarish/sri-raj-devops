@@ -22,7 +22,6 @@ phases:
 
   pre_build:
     commands:
-      - echo "DEBUG - NVD_API_KEY Value: $NVD_API_KEY"
       - export NVD_DB_DIR="/codebuild/output/dependency-check-data"
       - mkdir -p $NVD_DB_DIR
       - semgrep --config=auto --json > semgrep-report.json || true
