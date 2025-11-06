@@ -14,10 +14,13 @@ phases:
       - apt-get update -y
       - apt-get install -y jq wget unzip python3-pip awscli gnupg apt-transport-https lsb-release
       - pip3 install --no-cache-dir semgrep
-      - mvn --version
-      - wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | apt-key add -
-      - echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/trivy.list
-      - apt-get update -y && apt-get install -y trivy
+
+      # Install Trivy (correct for Ubuntu)
+      - wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor -o /usr/share/keyrings/trivy.gpg
+      - echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" \
+        | tee /etc/apt/sources.list.d/trivy.list
+      - apt-get update -y
+      - apt-get install -y trivy
 
   pre_build:
     commands:
@@ -33,7 +36,11 @@ phases:
   post_build:
     commands:
       - echo "Deploying to EC2 instance..."
-      - aws ssm send-command --instance-ids "$EC2_INSTANCE_ID" --document-name "AWS-RunShellScript" --parameters commands="aws s3 cp s3://$S3_BUCKET/$ARTIFACT_PATH/$(aws s3 ls s3://$S3_BUCKET/$ARTIFACT_PATH/ | sort | tail -n1 | awk '{print \$4}') /home/ec2-user/app/app.jar && sudo systemctl restart lostfound" --region "$AWS_REGION"
+      - aws ssm send-command \
+          --instance-ids "$EC2_INSTANCE_ID" \
+          --document-name "AWS-RunShellScript" \
+          --parameters commands="aws s3 cp s3://$S3_BUCKET/$ARTIFACT_PATH/$(aws s3 ls s3://$S3_BUCKET/$ARTIFACT_PATH/ | sort | tail -n1 | awk '{print \$4}') /home/ec2-user/app/app.jar && sudo systemctl restart lostfound" \
+          --region "$AWS_REGION"
 
 artifacts:
   files:
