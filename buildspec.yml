@@ -21,6 +21,7 @@ phases:
 
   pre_build:
     commands:
+      - echo "NVD_API_KEY length: ${#NVD_API_KEY}"
       - export NVD_DB_DIR="/codebuild/output/dependency-check-data"
       - mkdir -p $NVD_DB_DIR
 
