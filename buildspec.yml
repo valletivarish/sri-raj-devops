@@ -6,7 +6,6 @@ env:
     EC2_INSTANCE_ID: "i-08c0dd6469825af4a"
     S3_BUCKET: "lostfound-artifacts-bucket"
     ARTIFACT_PATH: "backend-build"
-    NVD_API_KEY: "7d53459d-2b72-4271-8a98-786161835a0f"
 
 phases:
   install:
@@ -15,20 +14,12 @@ phases:
       - apt-get install -y openjdk-17-jre-headless jq wget unzip python3-pip
       - pip3 install semgrep
       - mvn --version
-      - curl -L https://github.com/jeremylong/DependencyCheck/releases/download/v9.1.0/dependency-check-9.1.0-release.zip -o depcheck.zip
-      - unzip depcheck.zip -d depcheck
-      - export PATH=$PATH:$(pwd)/depcheck/dependency-check/bin
       - wget https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh -O install.sh
       - sh install.sh
 
   pre_build:
     commands:
       - semgrep --config=auto --json > semgrep-report.json || true
-      - mkdir -p /tmp/dc-cache
-      - dependency-check.sh --project LostFound --scan . --format JSON --out dependency-check-report --nvdApiKey "$NVD_API_KEY" --nvdApiDelay 12000 --cache /tmp/dc-cache
-      - >
-        CRITICALS=$(jq '.dependencies[].vulnerabilities[]? | select(.severity=="CRITICAL")' dependency-check-report/dependency-check-report.json | wc -l);
-        if [ "$CRITICALS" -gt 0 ]; then exit 1; fi
       - trivy fs --severity CRITICAL --no-progress --exit-code 1 .
 
   build:
@@ -50,6 +41,5 @@ phases:
 artifacts:
   files:
     - target/*.jar
-    - dependency-check-report/**
     - semgrep-report.json
   discard-paths: yes
