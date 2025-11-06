@@ -12,6 +12,7 @@ phases:
   install:
     commands:
       - apt-get update -y
+      - apt-get install -y openjdk-17-jre-headless
       - apt-get install -y jq wget unzip python3-pip
       - pip3 install semgrep
       - mvn --version
