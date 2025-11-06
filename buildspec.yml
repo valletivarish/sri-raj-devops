@@ -6,55 +6,52 @@ env:
     EC2_INSTANCE_ID: "i-08c0dd6469825af4a"
     S3_BUCKET: "lostfound-artifacts-bucket"
     ARTIFACT_PATH: "backend-build"
+    NVD_API_KEY: "7d53459d-2b72-4271-8a98-786161835a0f"
 
 phases:
   install:
     commands:
-      - yum install -y jq wget unzip python3-pip
+      - apt-get update -y
+      - apt-get install -y jq wget unzip python3-pip
       - pip3 install semgrep
       - mvn --version
+      - curl -L https://github.com/jeremylong/DependencyCheck/releases/download/v9.1.0/dependency-check-9.1.0-release.zip -o depcheck.zip
+      - unzip depcheck.zip -d depcheck
+      - export PATH=$PATH:$(pwd)/depcheck/dependency-check/bin
       - wget https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh -O install.sh
       - sh install.sh
 
   pre_build:
     commands:
-      - echo "Running Semgrep Scan"
+      - echo "DEBUG - NVD_API_KEY Value: $NVD_API_KEY"
+      - export NVD_DB_DIR="/codebuild/output/dependency-check-data"
+      - mkdir -p $NVD_DB_DIR
       - semgrep --config=auto --json > semgrep-report.json || true
-
-      - echo "Running OWASP Dependency Check (Maven Plugin)"
-      - mvn org.owasp:dependency-check-maven:check -Dformat=JSON || true
-
-      - echo "Failing pipeline if CRITICAL vulnerabilities found"
-      - |
-        CRITICALS=$(jq '[.dependencies[].vulnerabilities[]? | select(.severity=="CRITICAL")] | length' target/dependency-check-report.json)
-        if [ "$CRITICALS" -gt 0 ]; then
-          echo "CRITICAL Vulnerabilities Found: $CRITICALS"
-          exit 1
-        fi
-
-      - echo "Running Trivy filesystem scan"
+      - dependency-check.sh --project LostFound --scan . --format JSON --out dependency-check-report --nvdApiKey "$NVD_API_KEY" --data $NVD_DB_DIR --nvdApiDelay 2000
+      - >
+        CRITICALS=$(jq '.dependencies[].vulnerabilities[]? | select(.severity=="CRITICAL")' dependency-check-report/dependency-check-report.json | wc -l);
+        if [ "$CRITICALS" -gt 0 ]; then exit 1; fi
       - trivy fs --severity CRITICAL --no-progress --exit-code 1 .
 
   build:
     commands:
-      - echo "Building application"
       - mvn clean package -DskipTests
       - LATEST_JAR=$(ls target/*.jar | head -n 1)
       - aws s3 cp "$LATEST_JAR" s3://$S3_BUCKET/$ARTIFACT_PATH/
 
   post_build:
     commands:
-      - echo "Deploying latest build to EC2 via SSM"
-      - |
+      - echo "Deploying to EC2 instance..."
+      - >
         aws ssm send-command \
-          --instance-ids "$EC2_INSTANCE_ID" \
-          --document-name "AWS-RunShellScript" \
-          --parameters commands="sudo aws s3 cp s3://$S3_BUCKET/$ARTIFACT_PATH/$(aws s3 ls s3://$S3_BUCKET/$ARTIFACT_PATH/ | sort | tail -n1 | awk '{print \$4}') /home/ec2-user/app/app.jar && sudo systemctl restart lostfound" \
-          --region $AWS_REGION
+        --instance-ids "$EC2_INSTANCE_ID" \
+        --document-name "AWS-RunShellScript" \
+        --parameters commands="aws s3 cp s3://$S3_BUCKET/$ARTIFACT_PATH/$(aws s3 ls s3://$S3_BUCKET/$ARTIFACT_PATH/ | sort | tail -n1 | awk '{print \$4}') /home/ec2-user/app/app.jar && sudo systemctl restart lostfound" \
+        --region $AWS_REGION
 
 artifacts:
   files:
     - target/*.jar
-    - target/dependency-check-report.json
+    - dependency-check-report/**
     - semgrep-report.json
   discard-paths: yes
