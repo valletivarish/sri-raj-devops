@@ -6,6 +6,7 @@ env:
     EC2_INSTANCE_ID: "i-08c0dd6469825af4a"
     S3_BUCKET: "lostfound-artifacts-bucket"
     ARTIFACT_PATH: "backend-build"
+    NVD_API_KEY: "7d53459d-2b72-4271-8a98-786161835a0f"
 
 phases:
   install:
