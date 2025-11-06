@@ -10,7 +10,7 @@ env:
 phases:
   install:
     commands:
-      - yum install -y jq wget unzip python3-pip
+      - apt-get update -y && apt-get install -y jq wget unzip python3-pip
       - pip3 install semgrep
       - mvn --version
       - curl -L https://github.com/jeremylong/DependencyCheck/releases/download/v9.1.0/dependency-check-9.1.0-release.zip -o depcheck.zip
@@ -41,7 +41,7 @@ phases:
         aws ssm send-command \
           --instance-ids "$EC2_INSTANCE_ID" \
           --document-name "AWS-RunShellScript" \
-          --parameters commands="sudo aws s3 cp s3://$S3_BUCKET/$ARTIFACT_PATH/$(aws s3 ls s3://$S3_BUCKET/$ARTIFACT_PATH/ | sort | tail -n1 | awk '{print \$4}') /home/ec2-user/app/app.jar && sudo systemctl restart lostfound" \
+          --parameters commands="aws s3 cp s3://$S3_BUCKET/$ARTIFACT_PATH/$(aws s3 ls s3://$S3_BUCKET/$ARTIFACT_PATH/ | sort | tail -n1 | awk '{print \$4}') /home/ec2-user/app/app.jar && sudo systemctl restart lostfound" \
           --region $AWS_REGION
 
 artifacts:
