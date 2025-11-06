@@ -1,22 +1,52 @@
 version: 0.2
 
+env:
+  variables:
+    AWS_REGION: "eu-west-1"
+    EC2_INSTANCE_ID: "i-08c0dd6469825af4a"
+    S3_BUCKET: "lostfound-artifacts-bucket"
+    ARTIFACT_PATH: "backend-build"
+
 phases:
   install:
     commands:
-      - echo Installing Maven
+      - yum install -y jq wget unzip python3-pip
+      - pip3 install semgrep
       - mvn --version
+      - curl -L https://github.com/jeremylong/DependencyCheck/releases/download/v9.1.0/dependency-check-9.1.0-release.zip -o depcheck.zip
+      - unzip depcheck.zip -d depcheck
+      - export PATH=$PATH:$(pwd)/depcheck/dependency-check/bin
+      - wget https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh -O install.sh
+      - sh install.sh
+
   pre_build:
     commands:
-      - echo Clearing previous builds...
-      - mvn clean
+      - semgrep --config=auto --json > semgrep-report.json || true
+      - dependency-check.sh --project LostFound --scan . --format JSON --out dependency-check-report
+      - |
+        CRITICALS=$(jq '.dependencies[].vulnerabilities[]? | select(.severity=="CRITICAL")' dependency-check-report/dependency-check-report.json | wc -l)
+        if [ "$CRITICALS" -gt 0 ]; then exit 1; fi
+      - trivy fs --severity CRITICAL --no-progress --exit-code 1 .
+
   build:
     commands:
-      - echo Building the project...
-      - mvn package -DskipTests
+      - mvn clean package -DskipTests
+      - LATEST_JAR=$(ls target/*.jar | head -n 1)
+      - aws s3 cp "$LATEST_JAR" s3://$S3_BUCKET/$ARTIFACT_PATH/
+
   post_build:
     commands:
-      - echo Build completed successfully.
+      - echo "Deploying to EC2 instance..."
+      - |
+        aws ssm send-command \
+          --instance-ids "$EC2_INSTANCE_ID" \
+          --document-name "AWS-RunShellScript" \
+          --parameters commands="sudo aws s3 cp s3://$S3_BUCKET/$ARTIFACT_PATH/$(aws s3 ls s3://$S3_BUCKET/$ARTIFACT_PATH/ | sort | tail -n1 | awk '{print \$4}') /home/ec2-user/app/app.jar && sudo systemctl restart lostfound" \
+          --region $AWS_REGION
+
 artifacts:
   files:
     - target/*.jar
+    - dependency-check-report/**
+    - semgrep-report.json
   discard-paths: yes
