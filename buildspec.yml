@@ -12,8 +12,7 @@ phases:
   install:
     commands:
       - apt-get update -y
-      - apt-get install -y openjdk-17-jre-headless
-      - apt-get install -y jq wget unzip python3-pip
+      - apt-get install -y openjdk-17-jre-headless jq wget unzip python3-pip
       - pip3 install semgrep
       - mvn --version
       - curl -L https://github.com/jeremylong/DependencyCheck/releases/download/v9.1.0/dependency-check-9.1.0-release.zip -o depcheck.zip
@@ -24,10 +23,8 @@ phases:
 
   pre_build:
     commands:
-      - export NVD_DB_DIR="/codebuild/output/dependency-check-data"
-      - mkdir -p $NVD_DB_DIR
       - semgrep --config=auto --json > semgrep-report.json || true
-      - dependency-check.sh --project LostFound --scan . --format JSON --out dependency-check-report --nvdApiKey "$NVD_API_KEY" --data $NVD_DB_DIR --nvdApiDelay 8000 --cveValidForHours 1
+      - dependency-check.sh --project LostFound --scan . --format JSON --out dependency-check-report --nvdApiKey "$NVD_API_KEY" --nvdApiDelay 8000 --cveValidForHours 1
       - >
         CRITICALS=$(jq '.dependencies[].vulnerabilities[]? | select(.severity=="CRITICAL")' dependency-check-report/dependency-check-report.json | wc -l);
         if [ "$CRITICALS" -gt 0 ]; then exit 1; fi
