@@ -33,7 +33,7 @@ phases:
   post_build:
     commands:
       - echo "Deploying to EC2 instance..."
-      - aws ssm send-command --instance-ids "$EC2_INSTANCE_ID" --document-name "AWS-RunShellScript" --parameters "commands=[\"aws s3 cp s3://$S3_BUCKET/$ARTIFACT_PATH/$(aws s3 ls s3://$S3_BUCKET/$ARTIFACT_PATH/ | sort | tail -n1 | awk '{print $4}') /home/ec2-user/app/app.jar\",\"sudo systemctl restart lostfound\"]" --region "$AWS_REGION"
+      - aws ssm send-command --instance-ids "$EC2_INSTANCE_ID" --document-name "AWS-RunShellScript" --parameters "commands=[\"aws s3 cp s3://$S3_BUCKET/$ARTIFACT_PATH/$(aws s3 ls s3://$S3_BUCKET/$ARTIFACT_PATH/ | sort | tail -n1 | awk '{print $4}') /home/ec2-user/app/app.jar\",\"sudo systemctl set-environment JAVA_TOOL_OPTIONS='--add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.nio=ALL-UNNAMED'\",\"sudo systemctl daemon-reload\",\"sudo systemctl restart lostfound\"]" --region "$AWS_REGION"
 
 artifacts:
   files:
