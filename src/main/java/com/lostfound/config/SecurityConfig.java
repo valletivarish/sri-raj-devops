@@ -2,6 +2,9 @@ package com.lostfound.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,12 +16,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.lang.NonNull;
 
 import com.lostfound.security.JwtAuthenticationEntryPoint;
 import com.lostfound.security.JwtAuthenticationFilter;
@@ -28,7 +25,7 @@ import java.util.List;
 
 @Configuration
 @EnableMethodSecurity
-public class SecurityConfig implements WebMvcConfigurer {
+public class SecurityConfig {
 
 	private JwtAuthenticationEntryPoint authenticationEntryPoint;
 
@@ -103,17 +100,5 @@ public class SecurityConfig implements WebMvcConfigurer {
         source.registerCorsConfiguration("/**", config);
         return source;
     }
-
-	@Override
-	public void addCorsMappings(@NonNull CorsRegistry registry) {
-		registry.addMapping("/**")
-				.allowedOrigins(Arrays.stream(allowedOrigins.split(","))
-						.map(String::trim)
-						.filter(s -> !s.isEmpty())
-						.toArray(String[]::new))
-				.allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-				.allowedHeaders("*")
-				.allowCredentials(allowCredentials);
-	}
 
 }
