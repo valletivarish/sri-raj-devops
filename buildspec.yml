@@ -21,8 +21,7 @@ phases:
 
   pre_build:
     commands:
-      - export SEMGREP_NO_EMOJI=1
-      - semgrep --config=auto --json > semgrep-report.json || true
+      - semgrep --config=auto --no-emoji --json > semgrep-report.json || true
       - trivy fs --severity CRITICAL --no-progress --exit-code 1 .
 
   build:
