@@ -26,7 +26,7 @@ phases:
 
   build:
     commands:
-      - mvn clean package -DskipTests
+      - mvn clean verify
       - LATEST_JAR=$(ls target/*.jar | head -n 1)
       - aws s3 cp "$LATEST_JAR" "s3://$S3_BUCKET/$ARTIFACT_PATH/"
 
