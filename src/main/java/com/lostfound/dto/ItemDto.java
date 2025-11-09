@@ -11,7 +11,8 @@ public class ItemDto {
 	@Size(min = 3, max = 200, message = "Title must be between 3 and 200 characters")
 	private String title;
 	
-	@Size(max = 2000, message = "Description must not exceed 2000 characters")
+	@NotBlank(message = "Description is required")
+	@Size(min = 3, max = 2000, message = "Description must be between 3 and 2000 characters")
 	private String description;
 	
 	@NotNull(message = "Type is required")
@@ -20,7 +21,8 @@ public class ItemDto {
 	@Size(max = 500, message = "Tags must not exceed 500 characters")
 	private String tags;
 	
-	@Size(max = 200, message = "Location must not exceed 200 characters")
+	@NotBlank(message = "Location is required")
+	@Size(min = 3, max = 200, message = "Location must be between 3 and 200 characters")
 	private String location;
 
 	public ItemDto() {

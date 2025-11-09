@@ -40,6 +40,9 @@ class ItemDtoTest {
         ItemDto dto = new ItemDto();
         dto.setTitle("");
         dto.setType(ItemType.LOST);
+        dto.setDescription("Black leather wallet");
+        dto.setTags("wallet,black");
+        dto.setLocation("Main Street");
 
         Set<ConstraintViolation<ItemDto>> violations = validator.validate(dto);
         assertFalse(violations.isEmpty());
@@ -51,6 +54,9 @@ class ItemDtoTest {
         ItemDto dto = new ItemDto();
         dto.setTitle("a".repeat(201));
         dto.setType(ItemType.LOST);
+        dto.setDescription("Black leather wallet");
+        dto.setTags("wallet,black");
+        dto.setLocation("Main Street");
 
         Set<ConstraintViolation<ItemDto>> violations = validator.validate(dto);
         assertFalse(violations.isEmpty());
@@ -63,6 +69,8 @@ class ItemDtoTest {
         dto.setTitle("Test Item");
         dto.setDescription("a".repeat(2001));
         dto.setType(ItemType.LOST);
+        dto.setTags("wallet,black");
+        dto.setLocation("Main Street");
 
         Set<ConstraintViolation<ItemDto>> violations = validator.validate(dto);
         assertFalse(violations.isEmpty());
@@ -70,10 +78,27 @@ class ItemDtoTest {
     }
 
     @Test
+    void testDescriptionRequired() {
+        ItemDto dto = new ItemDto();
+        dto.setTitle("Test Item");
+        dto.setDescription("   ");
+        dto.setType(ItemType.LOST);
+        dto.setTags("wallet,black");
+        dto.setLocation("Main Street");
+
+        Set<ConstraintViolation<ItemDto>> violations = validator.validate(dto);
+        assertFalse(violations.isEmpty());
+        assertTrue(violations.stream().anyMatch(v -> v.getMessage().equals("Description is required")));
+    }
+
+    @Test
     void testTypeRequired() {
         ItemDto dto = new ItemDto();
         dto.setTitle("Test Item");
         dto.setType(null);
+        dto.setDescription("Black leather wallet");
+        dto.setTags("wallet,black");
+        dto.setLocation("Main Street");
 
         Set<ConstraintViolation<ItemDto>> violations = validator.validate(dto);
         assertFalse(violations.isEmpty());
@@ -86,6 +111,8 @@ class ItemDtoTest {
         dto.setTitle("Test Item");
         dto.setTags("a".repeat(501));
         dto.setType(ItemType.LOST);
+        dto.setDescription("Black leather wallet");
+        dto.setLocation("Main Street");
 
         Set<ConstraintViolation<ItemDto>> violations = validator.validate(dto);
         assertFalse(violations.isEmpty());
@@ -98,10 +125,26 @@ class ItemDtoTest {
         dto.setTitle("Test Item");
         dto.setLocation("a".repeat(201));
         dto.setType(ItemType.LOST);
+        dto.setDescription("Black leather wallet");
+        dto.setTags("wallet,black");
 
         Set<ConstraintViolation<ItemDto>> violations = validator.validate(dto);
         assertFalse(violations.isEmpty());
         assertTrue(violations.stream().anyMatch(v -> v.getMessage().contains("200 characters")));
+    }
+
+    @Test
+    void testLocationRequired() {
+        ItemDto dto = new ItemDto();
+        dto.setTitle("Test Item");
+        dto.setLocation("   ");
+        dto.setType(ItemType.LOST);
+        dto.setDescription("Black leather wallet");
+        dto.setTags("wallet,black");
+
+        Set<ConstraintViolation<ItemDto>> violations = validator.validate(dto);
+        assertFalse(violations.isEmpty());
+        assertTrue(violations.stream().anyMatch(v -> v.getMessage().equals("Location is required")));
     }
 
     @Test
@@ -111,6 +154,7 @@ class ItemDtoTest {
         dto.setDescription("  Black leather wallet  ");
         dto.setTags("  wallet,black  ");
         dto.setLocation("  Main Street  ");
+        dto.setType(ItemType.LOST);
         
         assertEquals("Lost Wallet", dto.getTitle());
         assertEquals("Black leather wallet", dto.getDescription());
