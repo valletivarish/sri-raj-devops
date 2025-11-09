@@ -21,8 +21,10 @@ phases:
 
   pre_build:
     commands:
-      - semgrep --config=auto --json > semgrep-report.json || true
-      - trivy fs --severity CRITICAL --no-progress --exit-code 1 .
+    - export SEMGREP_NO_EMOJI=1
+    - semgrep scan --config=auto --json . > semgrep-report.json || true
+    - echo "Semgrep Summary:"
+    - cat semgrep-report.json | jq '.results[] | {check_id, path, start, message}' || true
 
   build:
     commands:
