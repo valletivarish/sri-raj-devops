@@ -54,7 +54,7 @@ class ItemDtoTest {
 
         Set<ConstraintViolation<ItemDto>> violations = validator.validate(dto);
         assertFalse(violations.isEmpty());
-        assertTrue(violations.stream().anyMatch(v -> v.getMessage().contains("1 and 200 characters")));
+        assertTrue(violations.stream().anyMatch(v -> v.getMessage().contains("3 and 200 characters")));
     }
 
     @Test
