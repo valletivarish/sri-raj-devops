@@ -25,6 +25,11 @@ phases:
     - semgrep scan --config=auto --json . > semgrep-report.json || true
     - echo "Semgrep Summary:"
     - cat semgrep-report.json | jq '.results[] | {check_id, path, start, message}' || true
+    - echo "Running Trivy scan..."
+    - trivy fs --severity HIGH,CRITICAL --ignore-unfixed --format json --output trivy-report.json . || true
+
+    - echo "Trivy Summary:"
+    - cat trivy-report.json | jq '.Results[].Vulnerabilities[] | {VulnerabilityID, PkgName, InstalledVersion, Severity, Title}' || true
 
   build:
     commands:
